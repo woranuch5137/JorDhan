@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จอดทัน - ระบบจอดรถอัจฉริยะในมหาวิทยาลัย</title>
+    <!-- นำเข้า Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- นำเข้า Font Google: IBM Plex Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- นำเข้า FontAwesome สำหรับไอคอน -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#13294B',
+                        accent: '#2450D8',
+                        bgapp: '#F2F4F7'
+                    },
+                    fontFamily: {
+                        thai: ['"IBM Plex Sans Thai"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'IBM Plex Sans Thai', sans-serif;
+            background-color: #e5e9ef;
+        }
+        /* ซ่อน scrollbar แต่ยังเลื่อนได้ */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4">
+
+    <div class="w-full sm:w-[412px] h-screen sm:h-[844px] bg-[#F2F4F7] sm:rounded-[40px] shadow-2xl flex flex-col relative overflow-hidden border-0 sm:border-8 sm:border-gray-800">
+
+        <!-- Status Bar จำลอง -->
+        <div class="bg-primary text-white px-6 pt-3 pb-1 flex justify-between items-center text-xs select-none">
+            <span class="font-semibold">07:15</span>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full"></i>
+            </div>
+        </div>
+
+        <header id="main-header" class="bg-primary text-white px-6 pb-6 pt-2 rounded-b-[28px] shadow-md z-10 transition-all duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 bg-accent rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fa-solid fa-square-parking text-white text-lg"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-wide">จอดทัน</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleNotificationModal()" class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition relative">
+                        <i class="fa-regular fa-bell text-sm"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="w-9 h-9 rounded-full bg-accent/50 border border-white/30 flex items-center justify-center font-bold text-sm">
+                        ม
+                    </div>
+                </div>
+            </div>
+
+            <!-- ข้อความทักทาย & ตารางเรียน -->
+            <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-lg font-semibold text-white/90">สวัสดีตอนเช้า มิ้น 👋</h1>
+                        <p class="text-xs text-white/70 mt-0.5">คาบถัดไป <span class="text-emerald-400 font-medium">08:00 น.</span> ห้อง 301 อาคารเรียนรวม 2</p>
+                    </div>
+                    <span class="bg-amber-500/20 text-amber-300 text-[11px] px-2.5 py-1 rounded-full font-medium border border-amber-500/30">
+                        อีก 28 นาที
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-y-auto no-scrollbar px-5 py-5 space-y-5 pb-24">
+
+            <!-- หน้าหลัก (Dashboard View) -->
+            <div id="view-dashboard" class="space-y-5">
+                
+                <!-- การ์ดแนะนำที่จอดอัจฉริยะ -->
+                <div class="bg-gradient-to-br from-primary to-[#1e3a6e] text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-accent/20 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider">
+                                แนะนำดีที่สุดสำหรับคุณ
+                            </span>
+                            <h2 class="text-lg font-bold mt-2">ลาน C ลานจอดรวม</h2>
+                            <p class="text-2xl font-extrabold text-emerald-400 mt-0.5">ว่าง 82 ที่</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/20 mx-auto">
+                                <i class="fa-solid fa-route text-accent text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline เวลาเดินทาง -->
+                    <div class="grid grid-cols-3 gap-2 bg-black/20 p-3 rounded-xl mb-4 text-center border border-white/5">
+                        <div>
+                            <div class="text-[10px] text-gray-300">จอดรถ</div>
+                            <div class="text-xs font-bold text-white">07:45</div>
+                        </div>
+                        <div class="border-x border-white/10">
+                            <div class="text-[10px] text-gray-300">รถรางออก</div>
+                            <div class="text-xs font-bold text-white">07:52</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-300">ถึงตึกเรียน</div>
+                            <div class="text-xs font-bold text-white text-emerald-400">07:57</div>
+                        </div>
+                    </div>
+
+                    <button onclick="openNavigationModal('ลาน C', '82 ที่ว่าง')" class="w-full bg-accent hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2 text-sm">
+                        <i class="fa-solid fa-location-arrow"></i>
+                        <span>นำทางไปลาน C</span>
+                    </button>
+                </div>
+
+                <!-- สลับประเภทพาหนะ & สถานะลานจอด -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-base">สถานะลานจอด</h3>
+                        <!-- ปุ่มสลับ มอเตอร์ไซค์ / รถยนต์ -->
+                        <div class="bg-gray-200 p-1 rounded-xl flex space-x-1">
+                            <button id="btn-moto" onclick="switchVehicleType('moto')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-primary shadow-sm transition">มอเตอร์ไซค์</button>
+                            <button id="btn-car" onclick="switchVehicleType('car')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 transition">รถยนต์</button>
+                        </div>
+                    </div>
+
+                    <!-- การ์ดแสดงลานจอดทั้ง 4 ลาน -->
+                    <div id="parking-grid" class="grid grid-cols-2 gap-3">
+                        <!-- ถูกสร้างผ่าน JavaScript ตามประเภทพาหนะ -->
+                    </div>
+                </div>
+
+                <!-- สวิตช์แจ้งเตือนตอนเช้า 07:15 น. -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-accent flex items-center justify-center">
+                            <i class="fa-solid fa-bell-concierge text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 text-sm">แจ้งเตือนตอนเช้า</h4>
+                            <p class="text-xs text-gray-500">แจ้งสถานะลานจอดทุก 07:15 น.</p>
+                        </div>
+                    </div>
+                    <!-- Toggle Switch -->
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" id="notif-toggle">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                    </label>
+                </div>
+
+                <!-- แต้มสะสม -->
+                <div onclick="switchTab('points')" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-2xl shadow-md cursor-pointer hover:shadow-lg transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-coins text-yellow-200 text-lg"></i>
+                            <span class="font-bold text-sm">แต้มสะสม จอดทัน</span>
+                        </div>
+                        <span class="text-xs bg-black/20 px-2.5 py-1 rounded-full font-medium">240 / 300 แต้ม</span>
+                    </div>
+                    <div class="w-full bg-black/20 rounded-full h-2 mb-2 overflow-hidden">
+                        <div class="bg-yellow-300 h-2 rounded-full" style="width: 80%"></div>
+                    </div>
+                    <p class="text-xs text-yellow-100">อีก 60 แต้ม แลกส่วนลดโรงอาหาร 20 บาท &rarr;</p>
+                </div>
+
+                <!-- การ์ด ถาม AI จอดทัน -->
+                <div onclick="switchTab('ai')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:border-accent transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">
+                            <i class="fa-solid fa-robot text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 text-sm">ถาม AI จอดทัน</h4>
+                            <p class="text-xs text-gray-500">ผู้ช่วยอัจฉริยะช่วยแนะนำที่จอดรถ & แต้ม</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400 text-sm"></i>
+                </div>
+
+            </div>
+
+            <div id="view-parking" class="space-y-4 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg font-bold text-gray-800">สถานะลานจอดทั้งหมด</h2>
+                    <div class="bg-gray-200 p-1 rounded-xl flex space-x-1">
+                        <button id="btn-moto-detailed" onclick="switchVehicleType('moto')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-primary shadow-sm transition">มอเตอร์ไซค์</button>
+                        <button id="btn-car-detailed" onclick="switchVehicleType('car')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 transition">รถยนต์</button>
+                    </div>
+                </div>
+                <div id="parking-detailed-list" class="space-y-3">
+                    <!-- รายละเอียดแบบเจาะลึกแสดงผลที่นี่ -->
+                </div>
+            </div>
+
+            <div id="view-points" class="space-y-4 hidden">
+                <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-lg text-center relative overflow-hidden">
+                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                        <i class="fa-solid fa-award text-3xl text-yellow-200"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold">240 แต้ม</h2>
+                    <p class="text-xs text-yellow-100 mt-1">สะสมแต้มจากการจอดรถตรงเวลาและแบ่งปันที่ว่าง</p>
+                    <div class="mt-4 bg-black/20 rounded-full h-3 max-w-xs mx-auto overflow-hidden p-0.5">
+                        <div class="bg-yellow-300 h-full rounded-full" style="width: 80%"></div>
+                    </div>
+                    <p class="text-[11px] text-yellow-200 mt-2">อีก 60 แต้มเพื่อปลดล็อกรางวัลถัดไป</p>
+                </div>
+
+                <h3 class="font-bold text-gray-800 text-sm mt-4">รายการของรางวัลแลกรับ</h3>
+                <div class="space-y-3">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                                <i class="fa-solid fa-utensils text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">ส่วนลดโรงอาหาร 20 บาท</h4>
+                                <p class="text-xs text-gray-500">ใช้ได้ทุกโรงอาหารในมหาวิทยาลัย</p>
+                            </div>
+                        </div>
+                        <button onclick="showRewardModal('ส่วนลดโรงอาหาร 20 บาท', 300)" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-accent hover:text-white transition">
+                            300 แต้ม
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-accent">
+                                <i class="fa-solid fa-mug-hot text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">เครื่องดื่มคาเฟ่ฟรี 1 แก้ว</h4>
+                                <p class="text-xs text-gray-500">ร้านกาแฟหน้าคณะสถาปัตย์</p>
+                            </div>
+                        </div>
+                        <button onclick="showRewardModal('เครื่องดื่มคาเฟ่ฟรี', 500)" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-accent hover:text-white transition">
+                            500 แต้ม
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                                <i class="fa-solid fa-ticket text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">คูปองจอดรถ VIP 1 สัปดาห์</h4>
+                                <p class="text-xs text-gray-500">จอดโซนพิเศษใกล้ตึกเรียนรวม</p>
+                            </div>
+                        </div>
+                        <button onclick="showRewardModal('คูปองจอดรถ VIP', 800)" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-accent hover:text-white transition">
+                            800 แต้ม
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ai" class="flex flex-col h-full space-y-4 hidden">
+                <!-- แชท Header ย่อย -->
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">AI จอดทัน</h3>
+                            <p class="text-[10px] text-emerald-500 font-medium flex items-center">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block mr-1"></span> ออนไลน์พร้อมตอบคำถาม
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="text-xs text-gray-500 hover:text-primary font-medium">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- ประวัติข้อความแชท -->
+                <div id="chat-messages" class="flex-1 space-y-3 overflow-y-auto pr-1" style="max-height: 400px;">
+                    <!-- ข้อความต้อนรับจาก AI -->
+                    <div class="flex items-start space-x-2">
+                        <div class="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs flex-shrink-0 mt-1">
+                            <i class="fa-solid fa-robot text-xs"></i>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 max-w-[80%] text-xs text-gray-700">
+                            สวัสดีครับ มิ้น! ผม AI จอดทัน ผู้ช่วยอัจฉริยะของคุณวันนี้ มีเรื่องที่จอดรถหรือแต้มสะสม สอบถามได้เลยครับ 😊
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มคำถามด่วน (Quick Questions) -->
+                <div class="space-y-1.5">
+                    <p class="text-[11px] font-semibold text-gray-500">คำถามยอดฮิต:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button onclick="sendQuickQuery('วันนี้ควรจอดที่ไหน')" class="bg-white border border-gray-200 hover:border-accent text-gray-700 text-xs px-3 py-1.5 rounded-xl shadow-sm transition">
+                            วันนี้ควรจอดที่ไหน
+                        </button>
+                        <button onclick="sendQuickQuery('ลาน A จะว่างกี่โมง')" class="bg-white border border-gray-200 hover:border-accent text-gray-700 text-xs px-3 py-1.5 rounded-xl shadow-sm transition">
+                            ลาน A จะว่างกี่โมง
+                        </button>
+                        <button onclick="sendQuickQuery('ลาน B ว่างไหม')" class="bg-white border border-gray-200 hover:border-accent text-gray-700 text-xs px-3 py-1.5 rounded-xl shadow-sm transition">
+                            ลาน B ว่างไหม
+                        </button>
+                        <button onclick="sendQuickQuery('แต้มสะสมแลกอะไรได้')" class="bg-white border border-gray-200 hover:border-accent text-gray-700 text-xs px-3 py-1.5 rounded-xl shadow-sm transition">
+                            แต้มสะสมแลกอะไรได้
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ช่องพิมพ์ข้อความแชท -->
+                <div class="flex items-center space-x-2 pt-2">
+                    <input type="text" id="chat-input" placeholder="พิมพ์คำถามเกี่ยวกับที่จอดรถ..." class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-accent shadow-sm" onkeypress="handleKeyPress(event)">
+                    <button onclick="sendMessage()" class="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-blue-700 transition shadow-md">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <nav class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2.5 px-6 flex justify-between items-center z-20 shadow-lg">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-accent transition">
+                <i class="fa-solid fa-house text-lg mb-0.5"></i>
+                <span class="text-[10px] font-semibold">หน้าหลัก</span>
+            </button>
+            <button onclick="switchTab('parking')" id="nav-parking" class="flex flex-col items-center text-gray-400 hover:text-gray-600 transition">
+                <i class="fa-solid fa-square-parking text-lg mb-0.5"></i>
+                <span class="text-[10px] font-semibold">ลานจอด</span>
+            </button>
+            <button onclick="switchTab('points')" id="nav-points" class="flex flex-col items-center text-gray-400 hover:text-gray-600 transition">
+                <i class="fa-solid fa-coins text-lg mb-0.5"></i>
+                <span class="text-[10px] font-semibold">แต้ม</span>
+            </button>
+            <button onclick="switchTab('ai')" id="nav-ai" class="flex flex-col items-center text-gray-400 hover:text-gray-600 transition">
+                <i class="fa-solid fa-robot text-lg mb-0.5"></i>
+                <span class="text-[10px] font-semibold">ถาม AI</span>
+            </button>
+        </nav>
+
+        <div id="modal-container" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+            <div id="modal-content" class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-transform duration-300">
+                <div id="modal-body" class="text-center space-y-4">
+                    <!-- จะถูกเติมด้วย JS -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ข้อมูลลานจอดรถ
+        const parkingData = {
+            moto: [
+                { name: 'ลาน A', available: 0, total: 180, walk: 'เดิน 8 นาที', location: 'ตึกคณะวิศวกรรมศาสตร์' },
+                { name: 'ลาน B', available: 14, total: 120, walk: 'เดิน 5 นาที', location: 'อาคารเรียนรวม 1' },
+                { name: 'ลาน C', available: 82, total: 250, walk: 'เดิน 3 นาที (มีรถราง)', location: 'ลานจอดรวมศูนย์กลาง' },
+                { name: 'ลาน D', available: 145, total: 200, walk: 'เดิน 6 นาที', location: 'โซนโรงอาหารกลาง' }
+            ],
+            car: [
+                { name: 'ลาน A', available: 0, total: 60, walk: 'เดิน 8 นาที', location: 'ตึกคณะวิศวกรรมศาสตร์' },
+                { name: 'ลาน B', available: 6, total: 40, walk: 'เดิน 5 นาที', location: 'อาคารเรียนรวม 1' },
+                { name: 'ลาน C', available: 42, total: 120, walk: 'เดิน 3 นาที (มีรถราง)', location: 'ลานจอดรวมศูนย์กลาง' },
+                { name: 'ลาน D', available: 58, total: 80, walk: 'เดิน 6 นาที', location: 'โซนโรงอาหารกลาง' }
+            ]
+        };
+
+        let currentVehicle = 'moto';
+        let currentTab = 'dashboard';
+
+        // ฟังก์ชันคำนวณสถานะและสี
+        function getStatusBadge(available, total) {
+            const ratio = available / total;
+            if (available === 0 || ratio < 0.1) {
+                return { text: 'เต็ม', bg: 'bg-red-50 text-red-600 border-red-200', bar: 'bg-red-500' };
+            } else if (ratio <= 0.3) {
+                return { text: 'ใกล้เต็ม', bg: 'bg-amber-50 text-amber-600 border-amber-200', bar: 'bg-amber-500' };
+            } else {
+                return { text: 'ว่าง', bg: 'bg-emerald-50 text-emerald-600 border-emerald-200', bar: 'bg-emerald-500' };
+            }
+        }
+
+        // เรนเดอร์การ์ดลานจอดในหน้าหลัก
+        function renderDashboardParking() {
+            const container = document.getElementById('parking-grid');
+            container.innerHTML = '';
+
+            parkingData[currentVehicle].forEach(lot => {
+                const status = getStatusBadge(lot.available, lot.total);
+                const percent = (lot.available / lot.total) * 100;
+
+                const card = document.createElement('div');
+                card.className = `bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition cursor-pointer`;
+                card.onclick = () => openLotDetail(lot);
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="font-bold text-gray-800 text-sm">${lot.name}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold border ${status.bg}">${status.text}</span>
+                        </div>
+                        <div class="text-xs font-bold text-gray-700">${lot.available} <span class="text-[10px] font-normal text-gray-400">/ ${lot.total} ที่</span></div>
+                    </div>
+                    <div class="mt-3 space-y-1.5">
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div class="${status.bar} h-1.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-gray-400">
+                            <span><i class="fa-solid fa-person-walking mr-1"></i>${lot.walk.split(' ')[1]} นาที</span>
+                            <span class="text-accent font-medium">ดูแผนที่</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // เรนเดอร์รายการลานจอดในหน้าลานจอดแยกต่างหาก
+        function renderDetailedParking() {
+            const container = document.getElementById('parking-detailed-list');
+            container.innerHTML = '';
+
+            parkingData[currentVehicle].forEach(lot => {
+                const status = getStatusBadge(lot.available, lot.total);
+                const percent = (lot.available / lot.total) * 100;
+
+                const item = document.createElement('div');
+                item.className = 'bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3';
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-base">${lot.name}</h4>
+                            <p class="text-xs text-gray-500">${lot.location}</p>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-full font-bold border ${status.bg}">${status.text}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-500">ที่ว่างคงเหลือ</span>
+                        <span class="font-bold text-gray-800">${lot.available} / ${lot.total} คัน</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div class="${status.bar} h-2 rounded-full" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 border-t border-gray-50 text-xs">
+                        <span class="text-gray-500"><i class="fa-solid fa-person-walking mr-1"></i> ${lot.walk}</span>
+                        <button onclick="openNavigationModal('${lot.name}', '${lot.available} ที่ว่าง')" class="bg-accent text-white px-3 py-1.5 rounded-xl font-medium hover:bg-blue-700 transition">
+                            นำทาง
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // สลับประเภทพาหนะ (มอเตอร์ไซค์ / รถยนต์)
+        function switchVehicleType(type) {
+            currentVehicle = type;
+            
+            // อัปเดตสไตล์ปุ่มหน้าหลัก
+            const btnMoto = document.getElementById('btn-moto');
+            const btnCar = document.getElementById('btn-car');
+            const btnMotoDet = document.getElementById('btn-moto-detailed');
+            const btnCarDet = document.getElementById('btn-car-detailed');
+
+            if (type === 'moto') {
+                [btnMoto, btnMotoDet].forEach(b => { if(b) { b.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-primary shadow-sm transition'; } });
+                [btnCar, btnCarDet].forEach(b => { if(b) { b.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 transition'; } });
+            } else {
+                [btnCar, btnCarDet].forEach(b => { if(b) { b.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-primary shadow-sm transition'; } });
+                [btnMoto, btnMotoDet].forEach(b => { if(b) { b.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 transition'; } });
+            }
+
+            renderDashboardParking();
+            renderDetailedParking();
+        }
+
+        // เปลี่ยนแท็บเมนูล่าง
+        function switchTab(tabName) {
+            currentTab = tabName;
+            const views = ['dashboard', 'parking', 'points', 'ai'];
+            
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+                
+                const nav = document.getElementById(`nav-${v}`);
+                if (nav) {
+                    nav.className = 'flex flex-col items-center text-gray-400 hover:text-gray-600 transition';
+                }
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = 'flex flex-col items-center text-accent transition';
+
+            // ย่อ/ขยาย Header ตามหน้า
+            const header = document.getElementById('main-header');
+            if (tabName === 'dashboard') {
+                header.style.display = 'block';
+            } else {
+                header.style.display = 'none';
+            }
+        }
+
+        // Modal นำทาง
+        function openNavigationModal(lotName, detail) {
+            const modal = document.getElementById('modal-container');
+            const content = document.getElementById('modal-body');
+            
+            content.innerHTML = `
+                <div class="w-14 h-14 bg-blue-50 text-accent rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl shadow-inner">
+                    <i class="fa-solid fa-location-arrow animate-pulse"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">กำลังเปิดระบบนำทาง</h3>
+                <p class="text-xs text-gray-500">เส้นทางไปยัง <span class="font-semibold text-gray-700">${lotName}</span> (${detail}) กำลังเริ่มต้นผ่านระบบภายในมหาวิทยาลัย</p>
+                <div class="bg-gray-50 p-3 rounded-xl text-left space-y-1 text-xs text-gray-600 my-2">
+                    <div>🚗 ระยะทาง: 650 เมตร</div>
+                    <div>⏱️ เวลาเดินทางคาดการณ์: 3 นาที</div>
+                    <div>🚌 รถรางเที่ยวถัดไป: 07:52 น.</div>
+                </div>
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-200 transition">ยกเลิก</button>
+                    <button onclick="closeModal()" class="flex-1 bg-accent text-white py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition">เริ่มนำทาง</button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        // Modal แลกรางวัลแต้ม
+        function showRewardModal(rewardName, pointsNeeded) {
+            const modal = document.getElementById('modal-container');
+            const content = document.getElementById('modal-body');
+
+            content.innerHTML = `
+                <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl shadow-inner">
+                    <i class="fa-solid fa-gift"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">ยืนยันการแลกรับสิทธิ์</h3>
+                <p class="text-xs text-gray-500">คุณต้องการใช้แต้มแลกรับ <span class="font-semibold text-gray-700">${rewardName}</span> ใช้แต้มจำนวน <span class="text-amber-600 font-bold">${pointsNeeded} แต้ม</span> หรือไม่?</p>
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-200 transition">ยกเลิก</button>
+                    <button onclick="confirmRedeem('${rewardName}')" class="flex-1 bg-amber-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-amber-600 transition">ยืนยันแลก</button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function confirmRedeem(rewardName) {
+            closeModal();
+            const modal = document.getElementById('modal-container');
+            const content = document.getElementById('modal-body');
+            content.innerHTML = `
+                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">แลกรับสำเร็จ!</h3>
+                <p class="text-xs text-gray-500">คูปอง <span class="font-semibold text-gray-700">${rewardName}</span> ถูกบันทึกในกระเป๋าคูปองของคุณแล้ว</p>
+                <button onclick="closeModal()" class="w-full bg-accent text-white py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition mt-2">ตกลง</button>
+            `;
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function toggleNotificationModal() {
+            const modal = document.getElementById('modal-container');
+            const content = document.getElementById('modal-body');
+            content.innerHTML = `
+                <div class="w-12 h-12 bg-blue-50 text-accent rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">การตั้งค่าการแจ้งเตือน</h3>
+                <p class="text-xs text-gray-500">ระบบแจ้งเตือนสภาพการจอดรถอัตโนมัติเวลา 07:15 น. ทุกวันจันทร์ - ศุกร์</p>
+                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl my-2 text-xs font-medium text-gray-700">
+                    <span>สถานะการแจ้งเตือนตอนเช้า</span>
+                    <span class="text-emerald-600 font-bold">เปิดใช้งานอยู่</span>
+                </div>
+                <button onclick="closeModal()" class="w-full bg-accent text-white py-2.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition">ปิดหน้าต่าง</button>
+            `;
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-container');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // ระบบแชท AI
+        function sendQuickQuery(text) {
+            document.getElementById('chat-input').value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+
+            // แสดงข้อความของผู้ใช้
+            const userMsgDiv = document.createElement('div');
+            userMsgDiv.className = 'flex items-start justify-end space-x-2';
+            userMsgDiv.innerHTML = `
+                <div class="bg-accent text-white p-3 rounded-2xl rounded-tr-none shadow-sm max-w-[80%] text-xs">
+                    ${messageText}
+                </div>
+                <div class="w-7 h-7 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs flex-shrink-0 mt-1 font-bold">
+                    ม
+                </div>
+            `;
+            chatMessages.appendChild(userMsgDiv);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // ประมวลผลคำตอบจาก AI ตาม Keyword
+            setTimeout(() => {
+                const aiReply = generateAIResponse(messageText);
+                const aiMsgDiv = document.createElement('div');
+                aiMsgDiv.className = 'flex items-start space-x-2';
+                aiMsgDiv.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs flex-shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-xs"></i>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 max-w-[80%] text-xs text-gray-700">
+                        ${aiReply}
+                    </div>
+                `;
+                chatMessages.appendChild(aiMsgDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 500);
+        }
+
+        function generateAIResponse(query) {
+            const q = query.toLowerCase();
+
+            if (q.includes('ลาน a')) {
+                return 'ลาน A ตอนนี้เต็มแล้วครับ (0/180) คาดว่าจะว่างอีกครั้งหลัง 09:50 น. แนะนำให้ไปจอดลาน C แทนครับ มีที่ว่าง 82 ที่ เดินทางสะดวกมีรถรางผ่านครับ';
+            } else if (q.includes('ลาน b')) {
+                return 'ลาน B ตอนนี้เหลือ 14 ที่ครับ (ใกล้เต็ม) แนะนำควรไปถึงก่อน 07:40 น. ก่อนที่ที่จอดจะเต็มครับ';
+            } else if (q.includes('แต้ม')) {
+                return 'ตอนนี้คุณมี 240 แต้มครับ! สะสมให้ครบ 300 แต้ม สามารถแลกส่วนลดโรงอาหาร 20 บาทได้ทันทีเลยครับ หรือสะสมเพิ่มเพื่อแลกคูปองจอดรถ VIP ก็ได้ครับ';
+            } else if (q.includes('จอด') || q.includes('ว่าง')) {
+                return 'ลาน A เต็มแล้วครับตอนนี้ แนะนำให้ไป <span class="font-bold text-accent">ลาน C</span> ดีที่สุดครับ ตอนนี้ว่างอยู่ 82 ที่ เดินทางทันคาบ 08:00 น. แน่นอนครับ';
+            } else {
+                return 'ผมเข้าใจคำถามของคุณครับ สำหรับเรื่องที่จอดรถและแต้มสะสมในมหาวิทยาลัย ตอนนี้ลาน C ว่างมากที่สุด (82 ที่) และคุณมีแต้มสะสมอยู่ 240 แต้ม มีอะไรให้ผมช่วยแนะนำเพิ่มเติมไหมครับ?';
+            }
+        }
+
+        // เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ
+        window.onload = function() {
+            renderDashboardParking();
+            renderDetailedParking();
+        }
+    </script>
+</body>
+</html>
